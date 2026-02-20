@@ -1,203 +1,311 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Legal App Pro - Suite Forense</title>
-    <!-- Tailwind CSS per lo stile -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React e ReactDOM via CDN -->
+
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel per far leggere il codice JSX al browser -->
+
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
+
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
     </style>
-</head>
-<body class="bg-slate-50">
+  </head>
+
+  <body class="bg-slate-50">
     <div id="root"></div>
 
     <script type="text/babel">
-        // Definiamo le icone usando Lucide (versione Browser)
-        const Icon = ({ name, size = 24, className = "" }) => {
-            const [svg, setSvg] = React.useState("");
-            
-            React.useEffect(() => {
-                if (window.lucide) {
-                    const iconSvg = window.lucide.icons[name];
-                    if (iconSvg) {
-                        // Creiamo l'elemento SVG tramite l'API di Lucide
-                        const attrs = { ...iconSvg[1], stroke: "currentColor", "stroke-width": 2, width: size, height: size, class: className };
-                        const children = iconSvg[2].map(child => `<${child[0]} ${Object.entries(child[1]).map(([k,v]) => `${k}="${v}"`).join(' ')} />`).join('');
-                        setSvg(`<svg xmlns="http://www.w3.org/2000/svg" ${Object.entries(attrs).map(([k,v]) => `${k}="${v}"`).join(' ')}>${children}</svg>`);
-                    }
-                }
-            }, [name, size, className]);
+      // Piccolo helper: se qualcosa esplode, almeno lo vedi in console
+      window.addEventListener("error", (e) => console.error("JS error:", e.error || e.message));
 
-            return <div dangerouslySetInnerHTML={{ __html: svg }} />;
+      const Icon = ({ name, size = 24, className = "" }) => {
+        const [svg, setSvg] = React.useState("");
+
+        React.useEffect(() => {
+          try {
+            if (!window.lucide || !window.lucide.icons) {
+              setSvg("");
+              return;
+            }
+            const iconSvg = window.lucide.icons[name];
+            if (!iconSvg) {
+              setSvg("");
+              return;
+            }
+
+            const attrs = {
+              ...iconSvg[1],
+              stroke: "currentColor",
+              "stroke-width": 2,
+              width: size,
+              height: size,
+              class: className,
+            };
+
+            const children = (iconSvg[2] || [])
+              .map(
+                (child) =>
+                  `<${child[0]} ${Object.entries(child[1] || {})
+                    .map(([k, v]) => `${k}="${v}"`)
+                    .join(" ")} />`
+              )
+              .join("");
+
+            setSvg(
+              `<svg xmlns="http://www.w3.org/2000/svg" ${Object.entries(attrs)
+                .map(([k, v]) => `${k}="${v}"`)
+                .join(" ")}>${children}</svg>`
+            );
+          } catch (err) {
+            console.error("Icon render error:", err);
+            setSvg("");
+          }
+        }, [name, size, className]);
+
+        return <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg }} />;
+      };
+
+      const NavButton = ({ active, onClick, iconName, label }) => (
+        <button
+          onClick={onClick}
+          className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+            active ? "text-blue-600" : "text-slate-400"
+          }`}
+        >
+          <Icon name={iconName} size={22} />
+          <span className="text-[10px] font-medium uppercase tracking-wider">{label}</span>
+        </button>
+      );
+
+      const TerminiProcessor = () => {
+        const [startDate, setStartDate] = React.useState(new Date().toISOString().split("T")[0]);
+        const [days, setDays] = React.useState(30);
+        const [includeSuspension, setIncludeSuspension] = React.useState(true);
+        const [resultDate, setResultDate] = React.useState(null);
+
+        const calculate = () => {
+          let date = new Date(startDate);
+          let d = parseInt(days) || 0;
+
+          date.setDate(date.getDate() + d);
+
+          if (includeSuspension) {
+            const startYear = new Date(startDate).getFullYear();
+            const augStart = new Date(startYear, 7, 1);
+            const augEnd = new Date(startYear, 7, 31);
+            if (new Date(startDate) <= augEnd && date >= augStart) date.setDate(date.getDate() + 31);
+          }
+
+          if (date.getDay() === 6) date.setDate(date.getDate() + 2);
+          else if (date.getDay() === 0) date.setDate(date.getDate() + 1);
+
+          setResultDate(date);
         };
 
-        // --- COMPONENTI UI ---
+        React.useEffect(() => {
+          calculate();
+        }, [startDate, days, includeSuspension]);
 
-        const NavButton = ({ active, onClick, iconName, label }) => (
-            <button 
-                onClick={onClick}
-                className={`flex flex-col items-center justify-center gap-1 transition-colors ${active ? 'text-blue-600' : 'text-slate-400'}`}
-            >
-                <Icon name={iconName} size={22} />
-                <span className="text-[10px] font-medium uppercase tracking-wider">{label}</span>
-            </button>
+        return (
+          <div className="p-5 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-lg border p-6 space-y-4">
+              <label className="block text-sm font-bold text-slate-700">Data Inizio</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full p-3 border rounded-xl bg-slate-50"
+              />
+
+              <label className="block text-sm font-bold text-slate-700">Giorni</label>
+              <input
+                type="number"
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                className="w-full p-3 border rounded-xl bg-slate-50"
+              />
+
+              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-blue-800 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={includeSuspension}
+                  onChange={(e) => setIncludeSuspension(e.target.checked)}
+                  className="w-5 h-5 accent-blue-600"
+                />
+                Sospensione Feriale (Ago)
+              </div>
+
+              {resultDate && (
+                <div className="mt-6 p-6 bg-slate-900 text-white rounded-2xl text-center">
+                  <div className="text-xs uppercase font-bold text-slate-400">Scadenza</div>
+                  <div className="text-2xl font-black mt-1">
+                    {resultDate.toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         );
+      };
 
-        // --- MODULO: CALCOLO TERMINI ---
+      const FatturazioneAvvocato = () => {
+        const [taxable, setTaxable] = React.useState(1000);
+        const [applyRitenuta, setApplyRitenuta] = React.useState(true);
 
-        const TerminiProcessor = () => {
-            const [startDate, setStartDate] = React.useState(new Date().toISOString().split('T')[0]);
-            const [days, setDays] = React.useState(30);
-            const [includeSuspension, setIncludeSuspension] = React.useState(true);
-            const [resultDate, setResultDate] = React.useState(null);
+        const cpa = taxable * 0.04;
+        const iva = (taxable + cpa) * 0.22;
+        const ritenuta = applyRitenuta ? taxable * 0.2 : 0;
+        const totale = taxable + cpa + iva - ritenuta;
 
-            const calculate = () => {
-                let date = new Date(startDate);
-                let d = parseInt(days) || 0;
-                date.setDate(date.getDate() + d);
-                if (includeSuspension) {
-                    const startYear = new Date(startDate).getFullYear();
-                    const augStart = new Date(startYear, 7, 1);
-                    const augEnd = new Date(startYear, 7, 31);
-                    if (new Date(startDate) <= augEnd && date >= augStart) date.setDate(date.getDate() + 31);
-                }
-                if (date.getDay() === 6) date.setDate(date.getDate() + 2);
-                else if (date.getDay() === 0) date.setDate(date.getDate() + 1);
-                setResultDate(date);
-            };
+        const format = (v) => new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(v);
 
-            React.useEffect(() => { calculate(); }, [startDate, days, includeSuspension]);
+        return (
+          <div className="p-5 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-lg border p-6 space-y-4">
+              <label className="block text-sm font-bold text-slate-700">Onorario Imponibile</label>
+              <input
+                type="number"
+                value={taxable}
+                onChange={(e) => setTaxable(parseFloat(e.target.value) || 0)}
+                className="w-full p-3 border rounded-xl bg-slate-50 font-bold"
+              />
 
-            return (
-                <div className="p-5 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-lg border p-6 space-y-4">
-                        <label className="block text-sm font-bold text-slate-700">Data Inizio</label>
-                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-3 border rounded-xl bg-slate-50" />
-                        <label className="block text-sm font-bold text-slate-700">Giorni</label>
-                        <input type="number" value={days} onChange={e => setDays(e.target.value)} className="w-full p-3 border rounded-xl bg-slate-50" />
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-blue-800 text-sm font-medium">
-                            <input type="checkbox" checked={includeSuspension} onChange={e => setIncludeSuspension(e.target.checked)} className="w-5 h-5 accent-blue-600" />
-                            Sospensione Feriale (Ago)
-                        </div>
-                        {resultDate && (
-                            <div className="mt-6 p-6 bg-slate-900 text-white rounded-2xl text-center">
-                                <div className="text-xs uppercase font-bold text-slate-400">Scadenza</div>
-                                <div className="text-2xl font-black mt-1">{resultDate.toLocaleDateString('it-IT', { day:'2-digit', month:'long', year:'numeric'})}</div>
-                            </div>
-                        )}
-                    </div>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                <span className="text-sm font-medium">Ritenuta d'Acconto 20%</span>
+                <input
+                  type="checkbox"
+                  checked={applyRitenuta}
+                  onChange={(e) => setApplyRitenuta(e.target.checked)}
+                  className="w-6 h-6 accent-green-600"
+                />
+              </div>
+
+              <div className="space-y-2 border-t pt-4">
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>CPA (4%)</span>
+                  <span>{format(cpa)}</span>
                 </div>
-            );
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>IVA (22%)</span>
+                  <span>{format(iva)}</span>
+                </div>
+                {applyRitenuta && (
+                  <div className="flex justify-between text-sm text-red-500">
+                    <span>Ritenuta</span>
+                    <span>-{format(ritenuta)}</span>
+                  </div>
+                )}
+
+                <div className="mt-4 p-4 bg-green-600 text-white rounded-xl text-center">
+                  <div className="text-xs font-bold uppercase">Netto a Pagare</div>
+                  <div className="text-3xl font-black">{format(totale)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const Dashboard = ({ onSelect }) => {
+        const apps = [
+          { id: "istat", title: "Rivalutazioni Istat", icon: "Calculator", color: "bg-cyan-400" },
+          { id: "interessi", title: "Tassi e Interessi", icon: "TrendingUp", color: "bg-sky-300" },
+          { id: "termini", title: "Scadenze e Termini", icon: "Calendar", color: "bg-amber-300" },
+          { id: "atti", title: "Atti Giudiziari", icon: "Scale", color: "bg-yellow-100" },
+          { id: "fattura", title: "Fatturazione Avvocati", icon: "Euro", color: "bg-green-300" },
+          { id: "danni", title: "Risarcimento Danni", icon: "Briefcase", color: "bg-red-300" },
+        ];
+
+        return (
+          <div className="p-4 grid grid-cols-2 gap-3 animate-fade-in">
+            {apps.map((app) => (
+              <button
+                key={app.id}
+                onClick={() => onSelect(app.id)}
+                className={`${app.color} aspect-square rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md active:scale-95 transition-transform`}
+              >
+                <Icon name={app.icon} size={32} className="mb-2 opacity-80" />
+                <span className="text-xs font-bold leading-tight">{app.title}</span>
+              </button>
+            ))}
+          </div>
+        );
+      };
+
+      const App = () => {
+        const [view, setView] = React.useState("home");
+        const [currentApp, setCurrentApp] = React.useState(null);
+
+        const renderBody = () => {
+          if (currentApp === "termini") return <TerminiProcessor />;
+          if (currentApp === "fattura") return <FatturazioneAvvocato />;
+          if (currentApp) return <div className="p-10 text-center text-slate-400 italic">Modulo {currentApp} in fase di sviluppo.</div>;
+
+          if (view === "home") return <Dashboard onSelect={setCurrentApp} />;
+          return <div className="p-10 text-center text-slate-400 italic">Sezione {view} non ancora disponibile.</div>;
         };
 
-        // --- MODULO: FATTURAZIONE ---
+        return (
+          <div className="flex flex-col h-screen overflow-hidden">
+            <header className="bg-white border-b p-4 flex items-center justify-between sticky top-0 z-10">
+              <div className="flex items-center gap-2">
+                {currentApp && (
+                  <button onClick={() => setCurrentApp(null)} className="p-1 hover:bg-slate-100 rounded-full">
+                    <Icon name="ChevronLeft" />
+                  </button>
+                )}
+                <h1 className="font-bold text-lg">{currentApp ? "Utility" : "Legal App Pro"}</h1>
+              </div>
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-[10px] font-bold">AV</div>
+            </header>
 
-        const FatturazioneAvvocato = () => {
-            const [taxable, setTaxable] = React.useState(1000);
-            const [applyRitenuta, setApplyRitenuta] = React.useState(true);
+            <main className="flex-1 overflow-y-auto pb-20">{renderBody()}</main>
 
-            const cpa = taxable * 0.04;
-            const iva = (taxable + cpa) * 0.22;
-            const ritenuta = applyRitenuta ? (taxable * 0.20) : 0;
-            const totale = taxable + cpa + iva - ritenuta;
+            <nav className="bg-white border-t h-16 flex items-center justify-around fixed bottom-0 w-full">
+              <NavButton
+                active={view === "home" && !currentApp}
+                onClick={() => {
+                  setView("home");
+                  setCurrentApp(null);
+                }}
+                iconName="Home"
+                label="Home"
+              />
+              <NavButton active={view === "history"} onClick={() => setView("history")} iconName="History" label="Storia" />
+              <NavButton active={view === "settings"} onClick={() => setView("settings")} iconName="Settings" label="Impostazioni" />
+            </nav>
+          </div>
+        );
+      };
 
-            const format = (v) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(v);
-
-            return (
-                <div className="p-5 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-lg border p-6 space-y-4">
-                        <label className="block text-sm font-bold text-slate-700">Onorario Imponibile</label>
-                        <input type="number" value={taxable} onChange={e => setTaxable(parseFloat(e.target.value) || 0)} className="w-full p-3 border rounded-xl bg-slate-50 font-bold" />
-                        <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-                            <span className="text-sm font-medium">Ritenuta d'Acconto 20%</span>
-                            <input type="checkbox" checked={applyRitenuta} onChange={e => setApplyRitenuta(e.target.checked)} className="w-6 h-6 accent-green-600" />
-                        </div>
-                        <div className="space-y-2 border-t pt-4">
-                            <div className="flex justify-between text-sm text-slate-500"><span>CPA (4%)</span><span>{format(cpa)}</span></div>
-                            <div className="flex justify-between text-sm text-slate-500"><span>IVA (22%)</span><span>{format(iva)}</span></div>
-                            {applyRitenuta && <div className="flex justify-between text-sm text-red-500"><span>Ritenuta</span><span>-{format(ritenuta)}</span></div>}
-                            <div className="mt-4 p-4 bg-green-600 text-white rounded-xl text-center">
-                                <div className="text-xs font-bold uppercase">Netto a Pagare</div>
-                                <div className="text-3xl font-black">{format(totale)}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- DASHBOARD ---
-
-        const Dashboard = ({ onSelect }) => {
-            const apps = [
-                { id: 'istat', title: 'Rivalutazioni Istat', icon: 'Calculator', color: 'bg-cyan-400' },
-                { id: 'interessi', title: 'Tassi e Interessi', icon: 'TrendingUp', color: 'bg-sky-300' },
-                { id: 'termini', title: 'Scadenze e Termini', icon: 'Calendar', color: 'bg-amber-300' },
-                { id: 'atti', title: 'Atti Giudiziari', icon: 'Scale', color: 'bg-yellow-100' },
-                { id: 'fattura', title: 'Fatturazione Avvocati', icon: 'Euro', color: 'bg-green-300' },
-                { id: 'danni', title: 'Risarcimento Danni', icon: 'Briefcase', color: 'bg-red-300' },
-            ];
-
-            return (
-                <div className="p-4 grid grid-cols-2 gap-3 animate-fade-in">
-                    {apps.map(app => (
-                        <button key={app.id} onClick={() => onSelect(app.id)} className={`${app.color} aspect-square rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md active:scale-95 transition-transform`}>
-                            <Icon name={app.icon} size={32} className="mb-2 opacity-80" />
-                            <span className="text-xs font-bold leading-tight">{app.title}</span>
-                        </button>
-                    ))}
-                </div>
-            );
-        };
-
-        // --- APP ROOT ---
-
-        const App = () => {
-            const [view, setView] = React.useState('home');
-            const [currentApp, setCurrentApp] = React.useState(null);
-
-            const renderBody = () => {
-                if (currentApp === 'termini') return <TerminiProcessor />;
-                if (currentApp === 'fattura') return <FatturazioneAvvocato />;
-                if (currentApp) return <div className="p-10 text-center text-slate-400 italic">Modulo {currentApp} in fase di sviluppo.</div>;
-                
-                if (view === 'home') return <Dashboard onSelect={setCurrentApp} />;
-                return <div className="p-10 text-center text-slate-400 italic">Sezione {view} non ancora disponibile.</div>;
-            };
-
-            return (
-                <div className="flex flex-col h-screen overflow-hidden">
-                    <header className="bg-white border-b p-4 flex items-center justify-between sticky top-0 z-10">
-                        <div className="flex items-center gap-2">
-                            {currentApp && <button onClick={() => setCurrentApp(null)} className="p-1 hover:bg-slate-100 rounded-full"><Icon name="ChevronLeft" /></button>}
-                            <h1 className="font-bold text-lg">{currentApp ? "Utility" : "Legal App Pro"}</h1>
-                        </div>
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-[10px] font-bold">AV</div>
-                    </header>
-                    <main className="flex-1 overflow-y-auto pb-20">{renderBody()}</main>
-                    <nav className="bg-white border-t h-16 flex items-center justify-around fixed bottom-0 w-full">
-                        <NavButton active={view === 'home' && !currentApp} onClick={() => {setView('home'); setCurrentApp(null);}} iconName="Home" label="Home" />
-                        <NavButton active={view === 'history'} onClick={() => setView('history')} iconName="History" label="Storia" />
-                        <NavButton active={view === 'settings'} onClick={() => setView('settings')} iconName="Settings" label="Impostazioni" />
-                    </nav>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+      const rootEl = document.getElementById("root");
+      const root = ReactDOM.createRoot(rootEl);
+      root.render(<App />);
     </script>
-</body>
+  </body>
 </html>
