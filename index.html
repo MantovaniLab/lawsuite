@@ -15,30 +15,50 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Serif+4:wght@600&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sora:wght@700;800&display=swap");
       :root {
-        --bg-start: #f6f8fb;
-        --bg-end: #e9eff7;
-        --surface: rgba(255, 255, 255, 0.92);
+        --bg-start: #f8fbff;
+        --bg-mid: #eef3ff;
+        --bg-end: #ffeef7;
+        --surface: rgba(255, 255, 255, 0.9);
         --surface-strong: #ffffff;
-        --ink: #0f172a;
-        --ink-soft: #475569;
-        --brand: #1d4ed8;
+        --ink: #111827;
+        --ink-soft: #4b5563;
+        --brand: #2563eb;
         --brand-soft: #dbeafe;
+        --accent: #ec4899;
+        --accent-soft: #fce7f3;
       }
       body {
-        font-family: "Manrope", sans-serif;
+        font-family: "Plus Jakarta Sans", sans-serif;
         color: var(--ink);
-        background: radial-gradient(circle at 12% 12%, #fefeff, transparent 40%), linear-gradient(135deg, var(--bg-start), var(--bg-end));
+        background: radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.2), transparent 35%),
+          radial-gradient(circle at 85% 5%, rgba(236, 72, 153, 0.16), transparent 30%),
+          linear-gradient(145deg, var(--bg-start), var(--bg-mid) 50%, var(--bg-end));
         min-height: 100vh;
         -webkit-tap-highlight-color: transparent;
       }
       .app-shell {
         background: var(--surface);
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(14px);
       }
       .headline-serif {
-        font-family: "Source Serif 4", serif;
+        font-family: "Sora", sans-serif;
+        letter-spacing: -0.02em;
+      }
+      .shine {
+        position: relative;
+        overflow: hidden;
+      }
+      .shine::after {
+        content: "";
+        position: absolute;
+        inset: -120% auto auto -45%;
+        width: 60%;
+        height: 260%;
+        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+        transform: rotate(16deg);
+        pointer-events: none;
       }
       .animate-fade-in {
         animation: fadeIn 0.35s ease-out;
@@ -113,8 +133,8 @@
       const NavButton = ({ active, onClick, iconName, label }) => (
         <button
           onClick={onClick}
-          className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-            active ? "text-blue-700" : "text-slate-400"
+          className={`flex flex-col items-center justify-center gap-1 transition-all ${
+            active ? "text-blue-700 scale-105" : "text-slate-400"
           }`}
         >
           <Icon name={iconName} size={22} />
@@ -251,7 +271,7 @@
 
         return (
           <div className="p-5 animate-fade-in space-y-4">
-            <div className="rounded-3xl border border-blue-100 bg-gradient-to-r from-blue-50 to-slate-50 p-5">
+            <div className="shine rounded-3xl border border-fuchsia-100 bg-gradient-to-r from-blue-50 via-violet-50 to-pink-50 p-5">
               <div className="text-xs uppercase tracking-[0.2em] text-slate-500 font-semibold">Calcolo Interessi</div>
               <div className="headline-serif mt-1 text-2xl text-slate-900">Stima finanziaria dettagliata</div>
               <p className="mt-2 text-sm text-slate-600">Configura periodo, tasso e metodo di capitalizzazione per ottenere un conteggio chiaro e difendibile.</p>
@@ -302,7 +322,7 @@
                 <button
                   onClick={() => setMethod("simple")}
                   className={`rounded-xl p-3 text-sm font-semibold transition ${
-                    method === "simple" ? "bg-blue-600 text-white shadow" : "bg-slate-100 text-slate-700"
+                    method === "simple" ? "bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow" : "bg-slate-100 text-slate-700"
                   }`}
                 >
                   Interesse Semplice
@@ -310,7 +330,7 @@
                 <button
                   onClick={() => setMethod("compound")}
                   className={`rounded-xl p-3 text-sm font-semibold transition ${
-                    method === "compound" ? "bg-blue-600 text-white shadow" : "bg-slate-100 text-slate-700"
+                    method === "compound" ? "bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow" : "bg-slate-100 text-slate-700"
                   }`}
                 >
                   Interesse Composto
@@ -366,7 +386,7 @@
               </div>
             </div>
 
-            <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-lg">
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white rounded-3xl p-6 shadow-lg">
               <div className="text-xs uppercase tracking-[0.2em] text-slate-400 font-semibold">Riepilogo</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div className="rounded-xl bg-white/5 p-4">
@@ -382,8 +402,8 @@
                   <div className="text-2xl font-bold mt-1">{format(results.interest)}</div>
                 </div>
               </div>
-              <div className="mt-4 rounded-2xl bg-blue-600 p-4 text-center">
-                <div className="text-xs uppercase font-semibold text-blue-100">Montante Totale</div>
+              <div className="mt-4 rounded-2xl bg-gradient-to-r from-blue-600 to-fuchsia-500 p-4 text-center">
+                <div className="text-xs uppercase font-semibold text-blue-50">Montante Totale</div>
                 <div className="text-3xl font-extrabold mt-1">{format(results.amount)}</div>
               </div>
             </div>
@@ -451,12 +471,12 @@
 
       const Dashboard = ({ onSelect }) => {
         const apps = [
-          { id: "istat", title: "Rivalutazioni Istat", icon: "Calculator", color: "bg-slate-200" },
-          { id: "interessi", title: "Tassi e Interessi", icon: "TrendingUp", color: "bg-blue-100" },
-          { id: "termini", title: "Scadenze e Termini", icon: "Calendar", color: "bg-indigo-100" },
-          { id: "atti", title: "Atti Giudiziari", icon: "Scale", color: "bg-stone-200" },
-          { id: "fattura", title: "Fatturazione Avvocati", icon: "Euro", color: "bg-emerald-100" },
-          { id: "danni", title: "Risarcimento Danni", icon: "Briefcase", color: "bg-rose-100" },
+          { id: "istat", title: "Rivalutazioni Istat", icon: "Calculator", color: "from-cyan-200 to-blue-200" },
+          { id: "interessi", title: "Tassi e Interessi", icon: "TrendingUp", color: "from-indigo-200 to-violet-200" },
+          { id: "termini", title: "Scadenze e Termini", icon: "Calendar", color: "from-amber-100 to-orange-200" },
+          { id: "atti", title: "Atti Giudiziari", icon: "Scale", color: "from-slate-200 to-zinc-300" },
+          { id: "fattura", title: "Fatturazione Avvocati", icon: "Euro", color: "from-emerald-200 to-teal-200" },
+          { id: "danni", title: "Risarcimento Danni", icon: "Briefcase", color: "from-pink-200 to-rose-200" },
         ];
 
         return (
@@ -465,7 +485,7 @@
               <button
                 key={app.id}
                 onClick={() => onSelect(app.id)}
-                className={`${app.color} aspect-square rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-md hover:shadow-lg active:scale-95 transition-transform border border-white/80`}
+                className={`shine bg-gradient-to-br ${app.color} aspect-square rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-md hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-transform border border-white/80`}
               >
                 <Icon name={app.icon} size={32} className="mb-2 opacity-80" />
                 <span className="text-xs font-bold leading-tight">{app.title}</span>
@@ -500,11 +520,11 @@
                   </button>
                 )}
                 <div>
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 font-semibold">Lawsuite</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-fuchsia-600 font-semibold">Lawsuite</div>
                   <h1 className="font-bold text-lg leading-tight">{currentApp ? "Utility Professionale" : "Legal App Pro"}</h1>
                 </div>
               </div>
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center text-white text-[10px] font-bold shadow">AV</div>
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 via-indigo-500 to-fuchsia-500 rounded-xl flex items-center justify-center text-white text-[10px] font-bold shadow">AV</div>
             </header>
 
             <main className="flex-1 overflow-y-auto pb-20">{renderBody()}</main>
